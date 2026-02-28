@@ -8,12 +8,85 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Preahvihear&display=swap" rel="stylesheet">
 <style>
+/* ══════════════════════════════════════════
+   PHYSICS EQUATIONS — FADED ANIMATION
+   Requires: KaTeX CSS loaded in <head>
+   https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css
+══════════════════════════════════════════ */
+
+/* ── Equation nodes ── */
+.eq-node {
+  position: fixed;
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform-origin: center center;
+  transform: translateX(-50%) translateY(-50%);
+}
+
+/* KaTeX colour inherits from parent */
+.eq-node .katex { color: inherit; }
+
+/* Glow dot beside each equation */
+.eq-node::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #1877F2;
+  box-shadow: 0 0 8px 2px rgba(24,119,242,0.5);
+  top: 50%;
+  left: -14px;
+  transform: translateY(-50%);
+  opacity: 0.6;
+}
+
+/* ── Connection lines SVG ── */
+#eq-lines {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.18;
+}
+
+/* ── Scan-line sweep ── */
+.eq-scanline {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(24,119,242,0.15),
+    rgba(24,119,242,0.35),
+    rgba(24,119,242,0.15),
+    transparent
+  );
+  z-index: 5;
+  pointer-events: none;
+  animation: eq-scan 8s linear infinite;
+}
+
+@keyframes eq-scan {
+  0%   { top: -2px; opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
 
 /* ══════════════════════════════════════════
    RESET & ROOT
 ══════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; font-size: 16px; }
+html {font-size: 16px; }
 
 :root {
   --navy:      #050B18;
@@ -117,13 +190,13 @@ nav {
   background: rgba(255,255,255,0.15);
   margin: 0 8px;
 }
-.nav-cta {
+.nav-resume{
   padding: 8px 18px; border-radius: 30px;
   background: var(--blue-dim); border: 1px solid rgba(24,119,242,0.35);
   color: var(--blue); font-size: 0.82rem; font-weight: 600;
   transition: all 0.25s; cursor: pointer; font-family: inherit;
 }
-.nav-cta:hover {
+.nav-resume:hover {
   background: var(--blue); color: #fff;
   box-shadow: 0 0 20px var(--blue-glow);
 }
@@ -230,15 +303,16 @@ nav {
 
 .hero-headline {
   font-family: 'Preahvihear', sans-serif;
-  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
   line-height: 1.12;
   letter-spacing: 0.01em;
   color: var(--white);
 }
 .hero-headline .tw-wrap {
-  display: inline-flex; align-items: center; gap: 10px;
+  display: block; align-items: center; gap: 8px;
 }
 .hero-headline .typed {
+  display: block;
   color: var(--blue);
   text-shadow: 0 0 20px var(--blue-glow), 0 0 40px rgba(24,119,242,0.3);
 }
@@ -381,6 +455,11 @@ nav {
   transition: height 3s linear;
 }
 
+/* ══════════════════════════════════════════
+   EXPERIENCE (MODIFIED: MOVING BOX, STATIC DOT)
+══════════════════════════════════════════ */
+
+/* --- Box Utama --- */
 .t-item {
   position: relative;
   padding: 28px 30px;
@@ -390,46 +469,92 @@ nav {
   border-radius: 16px;
   opacity: 0;
   transform: translateX(-16px);
-  /* satu transition untuk semua state: reveal + hover */
-  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s, box-shadow 0.3s;
+  /* Transisi box */
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
 }
-.t-item:hover {
+
+/* Muncul awal */
+.t-item.visible { 
+  opacity: 1; 
+  transform: translateX(0); 
+}
+
+/* Hover: Box bergeser */
+.t-item.visible:hover { 
+  transform: translateX(12px); /* Kita buat geseran lebih terasa */
   border-color: rgba(24,119,242,0.35);
-  transform: translateX(4px);
   box-shadow: 0 0 30px rgba(24,119,242,0.08);
 }
-.t-item.visible { opacity: 1; transform: translateX(0); }
-/* hover setelah visible: override transform kembali ke slide kanan */
-.t-item.visible:hover { transform: translateX(4px); }
 
-/* Dot on timeline line */
+/* --- Dot (Titik) --- */
 .t-item::before {
   content: '';
-  position: absolute; left: -35px; top: 30px;
-  width: 14px; height: 14px;
+  position: absolute; 
+  /* KUNCI: Gunakan koordinat yang melawan pergeseran */
+  left: -35px; 
+  top: 30px;
+  width: 14px; 
+  height: 14px;
   background: var(--navy);
   border: 2px solid var(--blue);
   border-radius: 50%;
   box-shadow: 0 0 10px var(--blue-glow);
+  z-index: 10;
+  
   transform: scale(0);
-  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  /* Transisi dot harus selaras dengan durasi box agar sinkron */
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); 
 }
-.t-item.visible::before { transform: scale(1); }
+
+.t-item.visible::before { 
+  transform: scale(1); 
+}
+
+/* SOLUSI ABSOLUT: 
+   Saat box (.t-item) bergeser ke kanan (X+), 
+   kita paksa dot bergeser ke kiri (X-) dengan nilai yang SAMA PERSIS.
+*/
+.t-item.visible:hover::before {
+  /* Karena box geser +12px, dot kita tarik -12px */
+  transform: scale(1.2) translateX(-12px); 
+  /* scale(1.2) opsional, supaya dot sedikit membesar saat fokus */
+}
+
+/* TEKS BERGERAK (Jika ingin teks lebih jauh gesernya dari box) */
+.t-role, .t-title, .t-desc {
+  transition: transform 0.4s ease;
+}
+
+/* Jika ingin teks bergeser ekstra selain gerakan box-nya */
+.t-item:hover .t-role,
+.t-item:hover .t-title,
+.t-item:hover .t-desc {
+  transform: translateX(4px); 
+}
 
 .t-role {
-  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--blue); margin-bottom: 8px;
+  font-size: 0.72rem; 
+  font-weight: 700; 
+  letter-spacing: 0.1em;
+  text-transform: uppercase; 
+  color: var(--blue); 
+  margin-bottom: 8px;
 }
+
 .t-title {
   font-size: clamp(1rem, 2vw, 1.15rem);
-  font-weight: 700; color: var(--white); margin-bottom: 12px;
+  font-weight: 700; 
+  color: var(--white); 
+  margin-bottom: 12px;
 }
+
 .t-desc {
   font-family: 'Preahvihear', sans-serif;
   font-size: clamp(0.8rem, 1.5vw, 0.88rem);
-  color: var(--white-70); line-height: 1.75; text-align: justify;
+  color: var(--white-70); 
+  line-height: 1.75; 
+  text-align: justify;
 }
-
 /* ══════════════════════════════════════════
    PROJECTS
 ══════════════════════════════════════════ */
@@ -649,6 +774,7 @@ footer b { color: var(--blue); font-weight: 600; }
 .reveal {
   opacity: 0; transform: translateY(20px);
   transition: opacity 0.65s ease, transform 0.65s ease;
+  will-change: opacity, transform;
 }
 .reveal.visible { opacity: 1; transform: none; }
 
@@ -692,7 +818,7 @@ footer b { color: var(--blue); font-weight: 600; }
     <li><a href="#contact"    class="nav-link">Contact</a></li>
   </ul>
 
-  <a href="#contact" class="nav-cta">Let's Connect</a>
+  <a href="#cv" class="nav-resume">Resume</a>
 </nav>
 
 <!-- ════════════════════════════════
@@ -713,9 +839,9 @@ footer b { color: var(--blue); font-weight: 600; }
 
     <h1 class="hero-headline">
       <div class="tw-wrap">
-        Learn <span id="tw" class="typed"></span>
+        I'm studying <br> 
+        <span id="tw" class="typed"></span>
       </div>
-      like learn <span class="blue">Physics</span>
     </h1>
 
     <p class="hero-sub">Solved Schrödinger as a must; debugging is just routine...</p>
@@ -726,7 +852,7 @@ footer b { color: var(--blue); font-weight: 600; }
     </p>
 
     <div class="hero-btns">
-      <a href="#contact" class="btn btn-solid">
+      <a href="#contact" class="btn btn-glass">
         <img src="fontisto_world-o.png" alt="">
         Connect
       </a>
@@ -740,7 +866,7 @@ footer b { color: var(--blue); font-weight: 600; }
   <!-- Right: photo card -->
   <div class="hero-visual">
     <div class="hero-card">
-      <img src="PP.png" alt="Rendy">
+      <img src="pp.jpeg" alt="Rendy">
       <div class="hero-card-glow"></div>
     </div>
 
@@ -772,6 +898,12 @@ footer b { color: var(--blue); font-weight: 600; }
 
     <div class="timeline">
       <div class="timeline-progress" id="tline"></div>
+
+      <div class="t-item" style="transition-delay:0.05s">
+        <div class="t-role">Coordinator Laboratory </div>
+        <div class="t-title"> Computational and Simulation Physics Laboratory </div>
+        <p class="t-desc">Coordinated and instructed the Physics Computation and Simulation laboratory, delivering a curriculum focused on numerical stability, stochastic Monte Carlo methods, and the computational modeling of projectile motion and oscillatory systems using parabolic, hyperbolic, and elliptic partial differential equations.</p>
+      </div>
 
       <div class="t-item" style="transition-delay:0.05s">
         <div class="t-role">Teaching Assistant</div>
@@ -922,9 +1054,9 @@ footer b { color: var(--blue); font-weight: 600; }
       </div>
 
       <div class="contact-right">
-        <a href="mailto:rendy@example.com" class="contact-email-box">
+        <a href="mailto:reendyrp@gmail.com" class="contact-email-box">
           <span class="email-icon">✉️</span>
-          <span>rendy@example.com</span>
+          <span>reendyrp@gmail.com</span>
         </a>
 
         <div class="socials">
@@ -945,7 +1077,7 @@ footer b { color: var(--blue); font-weight: 600; }
 
 <!-- FOOTER -->
 <footer>
-  © 2025 <b>Rendy</b> — Instrumentation Physics × Code
+  © 2026 <b>Rendy</b> — Instrumentation Physics × AI
 </footer>
 
 <!-- ════════════════════════════════
@@ -978,12 +1110,11 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 const twEl = document.getElementById('tw');
 if(twEl) {
   new Typewriter(twEl, { loop: true, delay: 75, cursor: '|' })
-    .typeString('web dev').pauseFor(1400).deleteAll()
-    .typeString('data science').pauseFor(1400).deleteAll()
-    .typeString('AI').pauseFor(1400).deleteAll()
-    .typeString('machine learning').pauseFor(1400).deleteAll()
-    .typeString('IoT').pauseFor(1400).deleteAll()
-    .typeString('signal processing').pauseFor(1400).deleteAll()
+    .typeString('Web Development').pauseFor(1400).deleteAll()
+    .typeString('Data Science').pauseFor(1400).deleteAll()
+    .typeString('Artificial Intelligence').pauseFor(1400).deleteAll()
+    .typeString('Machine Learning').pauseFor(1400).deleteAll()
+    .typeString('AIoT').pauseFor(1400).deleteAll()
     .start();
 }
 
